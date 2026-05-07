@@ -31,7 +31,7 @@ def lagrange(xs, ys, x):
     n = len(xs)
     result = 0.0
     steps = []
-    for i in range(n):
+    for i in range(n):sd
         # حساب البسط والمقام بشكل منفصل لتجنب التعقيد
         num_list = [(x - xs[j]) for j in range(n) if j != i]
         den_list = [(xs[i] - xs[j]) for j in range(n) if j != i]
