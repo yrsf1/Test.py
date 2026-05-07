@@ -22,43 +22,45 @@ for i in range(n):
     with cols[1]:
         ys.append(st.number_input(f"f(x{i})", value=float((i + 1) ** 3), key=f"y{i}", format="%g"))
 
-# ── قيمة الاستيفاء ─────────────────────────────────────────
-st.subheader("قيمة الاستيفاء")
-x_val = st.number_input("أوجد f(x) عند x =", value=1.5, format="%g")
+# ── قيمة الاستيفاء والقيمة الحقيقية ──────────────────────────
+st.subheader("إعدادات الحساب")
+col_vals = st.columns(2)
+with col_vals[0]:
+    x_val = st.number_input("أوجد f(x) عند x =", value=1.5, format="%g")
+with col_vals[1]:
+    # إضافة مدخل للقيمة الحقيقية للمقارنة
+    actual_val = st.number_input("القيمة الحقيقية (Actual) - اختياري", value=0.0, format="%g", help="أدخل القيمة الصحيحة للدالة إذا كنت تعرفها لحساب نسبة الخطأ")
 
-# ── الحساب ─────────────────────────────────────────────────
-def lagrange(xs, ys, x):
-    n = len(xs)
-    result = 0.0
-    steps = []
-    for i in range(n):
-        # حساب البسط والمقام بشكل منفصل لتجنب التعقيد
-        num_list = [(x - xs[j]) for j in range(n) if j != i]
-        den_list = [(xs[i] - xs[j]) for j in range(n) if j != i]
-        
-        num = np.prod(num_list)
-        den = np.prod(den_list)
-        
-        Li = num / den
-        term = ys[i] * Li
-        result += term
-        steps.append({"i": i, "Li": Li, "fi": ys[i], "term": term, "num": num, "den": den})
-    return result, steps
+if st.button("⚡ احسب وتحلل الخطأ", use_container_width=True, type="primary"):
 
-if st.button("⚡ احسب", use_container_width=True, type="primary"):
-
-    # تحقق من تكرار قيم x
     if len(set(xs)) != len(xs):
-        st.error("⚠️ قيم x يجب أن تكون مختلفة لتجنب القسمة على صفر")
+        st.error("⚠️ قيم x يجب أن تكون مختلفة")
         st.stop()
 
     result, steps = lagrange(xs, ys, x_val)
 
-    # النتيجة النهائية
-    st.success(f"**f({x_val:g}) = {result:.6g}**")
+    # ── عرض المقارنة والخطأ ──
+    st.subheader("📊 تحليل النتائج")
+    
+    # حساب الأخطاء
+    abs_error = abs(actual_val - result)
+    rel_error = (abs_error / abs(actual_val)) * 100 if actual_val != 0 else 0
 
-    # عرض خطوات الحل
-    with st.expander("📝 خطوات الحل", expanded=True):
+    # عرض البطاقات الإحصائية (Metrics)
+    m_col1, m_col2, m_col3 = st.columns(3)
+    m_col1.metric("القيمة التقريبية (Approx)", f"{result:.6g}")
+    
+    if actual_val != 0:
+        m_col2.metric("القيمة الحقيقية (Actual)", f"{actual_val:g}")
+        m_col3.metric("نسبة الخطأ (Error %)", f"{rel_error:.4f}%", delta=f"{abs_error:.4g}", delta_color="inverse")
+    else:
+        m_col2.info("أدخل القيمة الحقيقية لحساب الخطأ")
+
+    # النتيجة النهائية
+    st.success(f"**النتيجة التقريبية: f({x_val:g}) ≈ {result:.6g}**")
+
+    # 📝 خطوات الحل (نفس الجزء السابق)
+    with st.expander("📝 خطوات الحل التفصيلية", expanded=False):
         for s in steps:
             st.markdown(f"**L{s['i']}({x_val:g})**")
             st.code(
@@ -66,10 +68,11 @@ if st.button("⚡ احسب", use_container_width=True, type="primary"):
                 f"f(x{s['i']}) × L{s['i']} = {s['fi']:g} × {s['Li']:.6g} = {s['term']:.6g}",
                 language="text"
             )
-        
-        # تصحيح طريقة عرض المعادلة النهائية لتجنب أخطاء f-string
         terms_str = " + ".join([f"{s['term']:.4g}" for s in steps])
         st.markdown(f"**P({x_val:g}) = {terms_str} = `{result:.6g}`**")
+
+    # ── الرسم البياني المطور ──
+    # ... (بقية كود الرسم البياني السابق يظل كما هو)
 
     # ── الرسم البياني ──────────────────────────────────────────
     st.subheader("التمثيل البياني")
